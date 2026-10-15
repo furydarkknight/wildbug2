@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MachinaSense — Industrial Fault AI & Predictive Maintenance</title>
+<link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+<!-- ─── Sidebar ──────────────────────────────────────────────────────── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">MachinaSense</div>
+      <div class="brand-sub">Industrial Telemetry AI</div>
+    </div>
+  </div>
+
+  <div class="edge-tag-wrap">
+    <span class="edge-tag-pill">Edge-First • Micro-Operator</span>
+  </div>
+
+  <ul class="nav-links">
+    <li><a href="#" class="nav-item active" data-page="dashboard"><span class="nav-icon">⬡</span>Dashboard</a></li>
+    <li><a href="#" class="nav-item" data-page="simulator"><span class="nav-icon">⟳</span>Live Simulator</a></li>
+    <li><a href="#" class="nav-item" data-page="upload"><span class="nav-icon">📁</span>CSV Diagnostic</a></li>
+    <li><a href="#" class="nav-item" data-page="tempload"><span class="nav-icon">🌡</span>Temp &amp; Load Monitor</a></li>
+    <li><a href="#" class="nav-item" data-page="timeline"><span class="nav-icon">⌛</span>Early Warning (IMS)</a></li>
+    <li><a href="#" class="nav-item" data-page="robustness"><span class="nav-icon">⛊</span>Robustness</a></li>
+    <li><a href="#" class="nav-item" data-page="edge"><span class="nav-icon">⚡</span>Edge &amp; Commercial ROI</a></li>
+    <li><a href="#" class="nav-item" data-page="alerts"><span class="nav-icon">⚠</span>Alert Log<span class="badge" id="alert-badge">0</span></a></li>
+    <li><a href="#" class="nav-item" data-page="metrics"><span class="nav-icon">◈</span>Performance</a></li>
+  </ul>
+
+  <div class="lang-switcher">
+    <span class="lang-label">Alert Language:</span>
+    <div class="lang-pills">
+      <button class="lang-pill" data-lang="en">EN</button>
+      <button class="lang-pill" data-lang="hi">हिंदी</button>
+      <button class="lang-pill active" data-lang="dual">Dual</button>
+    </div>
+  </div>
+
+  <div class="sidebar-status">
+    <div class="status-dot" id="status-dot"></div>
+    <div class="status-info">
+      <span class="status-main" id="status-text">Initialising Model...</span>
+      <span class="status-sub"  id="status-source">Detecting CWRU...</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── Main Content ─────────────────────────────────────────────────── -->
+<main class="main-content" id="main-content">
+
+  <!-- ══ 1. DASHBOARD ══════════════════════════════════════════════════ -->
+  <section class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Plant Telemetry &amp; Health Dashboard</h1>
+        <p class="page-sub">Unsupervised nominal-baseline predictive maintenance designed for small operators</p>
+      </div>
+      <div class="header-pills">
+        <span class="pill-coldstart">✔ Day-1 Cold-Start Ready (No Fault Labels Needed)</span>
+        <span class="pill-dataset" id="pill-dataset">CWRU Real Data Loaded</span>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap cyan">◈</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">F1 Detection Score</div>
+          <div class="kpi-value cyan-val" id="kpi-f1">—</div>
+          <div class="kpi-sub">On held-out real test set</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap emerald">✔</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">AUC-ROC Score</div>
+          <div class="kpi-value emerald-val" id="kpi-auc">—</div>
+          <div class="kpi-sub">Zero label leakage</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap amber">⌛</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">Advance Lead Time</div>
+          <div class="kpi-value amber-val" id="kpi-lead">—</div>
+          <div class="kpi-sub">NASA IMS run-to-failure window</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap coral">⚡</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">Hardware BOM Cost</div>
+          <div class="kpi-value" id="kpi-cost">₹1,800</div>
+          <div class="kpi-sub">Per motor node (vs ₹4.5L enterprise)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-2col">
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Anomaly Score Distribution</div>
+            <div class="card-sub">Separation of normal operating baseline vs defective bearing harmonics</div>
+          </div>
+          <span class="card-hint">Histogram (0.0 to 1.0)</span>
+        </div>
+        <canvas id="dist-chart" height="210"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Physics Feature Importance</div>
+            <div class="card-sub">Top vibration harmonics by deviation from baseline (σ units)</div>
+          </div>
+          <span class="card-hint">Z-Score Deviation</span>
+        </div>
+        <canvas id="feat-chart" height="210"></canvas>
+      </div>
+    </div>
+
+    <div class="row-2col">
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Operating Load Invariance</div>
+            <div class="card-sub">Model robustness across all motor loads (0 hp, 1 hp, 2 hp, 3 hp)</div>
+          </div>
+          <span class="card-hint">F1 Score per HP</span>
+        </div>
+        <canvas id="load-chart" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">System Architecture &amp; Model Info</div>
+            <div class="card-sub">Underlying edge-first intelligence stack</div>
+          </div>
+          <span class="card-hint">Pure NumPy / SciPy</span>
+        </div>
+        <div class="model-info" id="model-info">
+          <div class="info-row"><span>Architecture</span><span id="m-type">Ensemble (Isolation Forest + Autoencoder)</span></div>
+          <div class="info-row"><span>Feature Extraction</span><span id="m-feats">24 Interpretable Features (RMS, FFT, Kurt, Envelope)</span></div>
+          <div class="info-row"><span>Training Mode</span><span>Unsupervised (Normal-only baseline, zero fault labels)</span></div>
+          <div class="info-row"><span>Training Dataset</span><span id="m-trained">Real CWRU (Case Western Reserve University)</span></div>
+          <div class="info-row"><span>Motor Loads Trained</span><span id="m-loads">0, 1, 2, 3 HP</span></div>
+          <div class="info-row"><span>Anomaly Alert Threshold</span><span>0.45 (Calibrated for zero false alarms)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="advantage-banner card">
+      <div class="banner-title">Why MachinaSense Wins for Small Plants &amp; Machine Operators</div>
+      <div class="banner-grid">
+        <div class="banner-col">
+          <div class="banner-heading">1. Zero Fault History Required</div>
+          <div class="banner-desc">Enterprise solutions (Siemens, GE) require months of historical fault data. MachinaSense monitors a new motor from Day 1 using nominal-only baseline modeling.</div>
+        </div>
+        <div class="banner-col">
+          <div class="banner-heading">2. Load-Aware Suppression</div>
+          <div class="banner-desc">Prevents false alarms when machines accelerate or load changes. Dedicated sub-detectors per load condition plus 5-step transient settling suppression.</div>
+        </div>
+        <div class="banner-col">
+          <div class="banner-heading">3. ₹1,800 Micro-Hardware</div>
+          <div class="banner-desc">Runs entirely on a ₹450 ESP32-S3 or ₹1,450 Raspberry Pi Zero with an accelerometer. Total BOM under ₹2,000 enables full factory monitoring at &lt;1% competitor cost.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 2. LIVE SIMULATOR ═════════════════════════════════════════════ -->
+  <section class="page" id="page-simulator">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Live Edge Telemetry Simulator</h1>
+        <p class="page-sub">Stream raw vibration waveforms, inject bearing defects, test load-change suppression, or upload your own CSV for real-time AI analysis</p>
+      </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div class="sim-controls card">
+      <div class="ctrl-row">
+        <div class="ctrl-group">
+          <label>Bearing Condition (Fault Injection)</label>
+          <div class="btn-group" id="fault-btns">
+            <button class="fault-btn active" data-fault="normal">✔ Normal Baseline</button>
+            <button class="fault-btn" data-fault="inner_race">⚠ Inner Race (BPFI)</button>
+            <button class="fault-btn" data-fault="outer_race">⚠ Outer Race (BPFO)</button>
+            <button class="fault-btn" data-fault="ball">⚠ Ball Element (BSF)</button>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <label>Motor Load Setting</label>
+          <div class="btn-group" id="load-btns">
+            <button class="load-btn active" data-load="0">0 HP (1797 RPM)</button>
+            <button class="load-btn" data-load="1">1 HP (1772 RPM)</button>
+            <button class="load-btn" data-load="2">2 HP (1750 RPM)</button>
+            <button class="load-btn" data-load="3">3 HP (1730 RPM)</button>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <label>Plant Complications</label>
+          <div class="toggle-row">
+            <label class="toggle"><input type="checkbox" id="noise-toggle"/><span class="tog-slider"></span></label>
+            <span>Sensor Noise (15 dB SNR)</span>
+          </div>
+          <div class="toggle-row">
+            <label class="toggle"><input type="checkbox" id="missing-toggle"/><span class="tog-slider"></span></label>
+            <span>Missing Samples (5% drop)</span>
+          </div>
+        </div>
+
+        <div class="ctrl-group">
+          <label>Sampling Speed</label>
+          <select id="sim-speed">
+            <option value="2000">Slow (2s window)</option>
+            <option value="1000" selected>Standard (1s window)</option>
+            <option value="400">Fast (0.4s window)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="ctrl-actions">
+        <button class="btn-primary"   id="sim-start">▶ Start Telemetry Stream</button>
+        <button class="btn-secondary" id="sim-stop" disabled>⏹ Pause</button>
+        <button class="btn-ghost"     id="sim-reset">↺ Reset Stream</button>
+        <button class="btn-special"   id="sim-load-shift">⚡ Trigger Load Shift Transient (Test Robustness)</button>
+      </div>
+
+      <div class="suppression-banner" id="suppression-banner" style="display:none;">
+        <span class="sup-icon">⛊</span>
+        <span id="suppression-text">Motor load shifted: 5-step settling suppression active. False alarm prevented!</span>
+      </div>
+    </div>
+
+    <!-- ── CSV Upload in Live Simulator ──────────────────────────────── -->
+    <div class="card" id="sim-csv-card" style="margin-bottom:1.5rem">
+      <div class="card-header-clean">
+        <div>
+          <div class="card-title">📂 Upload CSV for Real-Time AI Analysis</div>
+          <div class="card-sub">Upload any vibration CSV — the trained model scores every window and streams results live into the oscilloscope below</div>
+        </div>
+        <span class="card-hint">Trained AI Model • No Fake Data</span>
+      </div>
+      <div class="sim-csv-row">
+        <input type="file" id="sim-csv-input" accept=".csv,.txt,.dat" style="display:none;"/>
+        <button class="btn-primary" id="sim-csv-browse-btn">📂 Choose CSV File</button>
+        <span class="sim-csv-filename" id="sim-csv-filename">No file selected</span>
+        <button class="btn-ghost" id="sim-csv-clear-btn" style="display:none;">✕ Clear</button>
+        <select id="sim-csv-load-select" class="form-select" style="width:auto;min-width:190px;">
+          <option value="0">0 HP (1797 RPM)</option>
+          <option value="1" selected>1 HP (1772 RPM)</option>
+          <option value="2">2 HP (1750 RPM)</option>
+          <option value="3">3 HP (1730 RPM)</option>
+        </select>
+        <button class="btn-primary" id="sim-csv-analyze-btn" disabled>⚡ Analyze &amp; Stream</button>
+      </div>
+      <div id="sim-csv-progress" style="display:none;margin-top:.75rem">
+        <div style="height:6px;border-radius:3px;background:#1f293d;overflow:hidden">
+          <div id="sim-csv-fill" style="height:100%;border-radius:3px;background:#06b6d4;width:0%;transition:width .3s"></div>
+        </div>
+        <span class="card-sub" id="sim-csv-status-text" style="margin-top:.4rem;display:block">Analyzing windows…</span>
+      </div>
+    </div>
+
+    <!-- Live Waveform & FFT Spectrum -->
+    <div class="row-2col">
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Live Vibration Oscilloscope</div>
+            <div class="card-sub">Raw acceleration samples — fixed Y-axis scale, never zooms in/out</div>
+          </div>
+          <span class="card-hint live-indicator" id="osc-live-label">● LIVE STREAM</span>
+        </div>
+        <canvas id="waveform-chart" height="180"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">FFT Frequency Spectrum Analyzer</div>
+            <div class="card-sub">Real-time spectral energy (0 to 6,000 Hz)</div>
+          </div>
+          <span class="card-hint">Harmonic Decomposition</span>
+        </div>
+        <canvas id="spectrum-chart" height="180"></canvas>
+      </div>
+    </div>
+
+    <!-- Gauge & Alert Output -->
+    <div class="row-2col">
+      <div class="card sim-gauge-card">
+        <div class="card-header-clean">
+          <div class="card-title">Real-Time Anomaly Score</div>
+          <span class="card-hint" id="sim-step-label">Step 0</span>
+        </div>
+        <div class="gauge-wrap">
+          <div class="gauge" id="gauge">
+            <svg viewBox="0 0 200 120" class="gauge-svg">
+              <defs>
+                <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%"   stop-color="#10b981"/>
+                  <stop offset="40%"  stop-color="#06b6d4"/>
+                  <stop offset="70%"  stop-color="#f59e0b"/>
+                  <stop offset="100%" stop-color="#ef4444"/>
+                </linearGradient>
+              </defs>
+              <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#1f293d" stroke-width="16" stroke-linecap="round"/>
+              <path id="gauge-arc" d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="16" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"/>
+              <text x="100" y="88"  text-anchor="middle" class="gauge-score" id="gauge-score">0.00</text>
+              <text x="100" y="108" text-anchor="middle" class="gauge-label" id="gauge-sev">NORMAL</text>
+            </svg>
+          </div>
+        </div>
+        <div class="reading-grid" id="reading-grid">
+          <div class="reading-row"><span>Detection Confidence</span><span id="r-conf">98%</span></div>
+          <div class="reading-row"><span>Estimated Time to Inspect (RUL)</span><span id="r-rul">Nominal</span></div>
+          <div class="reading-row"><span>Operating Condition</span><span id="r-load">0 HP</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">Real-Time Explainable Alert</div>
+          <span class="card-hint">Shopfloor Plain Language (EN + हिंदी)</span>
+        </div>
+        <div class="alert-box" id="latest-alert">
+          <div class="no-alert">
+            <span class="no-alert-icon">✔</span>
+            <div>No active alarms. Motor running smoothly within calibrated nominal baseline envelope.</div>
+          </div>
+        </div>
+        <div class="card-title" style="margin-top:1rem;font-size:.8rem">Top Deviating Features (Evidence)</div>
+        <canvas id="evidence-chart" height="130"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 3. CSV UPLOAD & REAL-TIME DIAGNOSTIC ═════════════════════════ -->
+  <section class="page" id="page-upload">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>CSV Telemetry Upload &amp; Real-Time Risk Diagnostic</h1>
+        <p class="page-sub">Upload raw vibration acceleration time-series data (.csv) to immediately determine machine status via the trained AI model</p>
+      </div>
+      <div class="header-pills">
+        <span class="pill-coldstart">✔ Instant AI Inference</span>
+        <span class="pill-dataset">Physics FFT + Ensemble AI</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem">
+      <div class="card-header-clean">
+        <div>
+          <div class="card-title">Quick-Test Datasets (1-Click Sample Previews)</div>
+          <div class="card-sub">Don't have a CSV? Click any sample to run an instant real-time diagnostic:</div>
+        </div>
+      </div>
+      <div class="sample-actions-bar">
+        <div class="sample-btn-group">
+          <button class="btn-sample normal" id="btn-sample-normal" data-type="normal"     data-load="0">
+            <span class="dot-status green"></span> Run Healthy Baseline (0 HP)
+          </button>
+          <button class="btn-sample inner"  id="btn-sample-inner"  data-type="inner_race" data-load="1">
+            <span class="dot-status amber"></span> Run Inner Race Defect (1 HP)
+          </button>
+          <button class="btn-sample outer"  id="btn-sample-outer"  data-type="outer_race" data-load="2">
+            <span class="dot-status orange"></span> Run Outer Race Defect (2 HP)
+          </button>
+          <button class="btn-sample ball"   id="btn-sample-ball"   data-type="ball"       data-load="3">
+            <span class="dot-status red"></span> Run Ball Element Defect (3 HP)
+          </button>
+        </div>
+        <div class="sample-downloads">
+          <span class="sample-dl-label">Download CSV Samples:</span>
+          <a href="/api/sample_csv?type=normal&load_hp=0"     class="btn-dl" download>Healthy.csv</a>
+          <a href="/api/sample_csv?type=inner_race&load_hp=1" class="btn-dl" download>InnerRace.csv</a>
+          <a href="/api/sample_csv?type=outer_race&load_hp=2" class="btn-dl" download>OuterRace.csv</a>
+          <a href="/api/sample_csv?type=ball&load_hp=3"       class="btn-dl" download>BallDefect.csv</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="row-2col">
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">1. Upload Sensor File</div>
+          <span class="card-hint">Supports CSV / TXT (Single or Multi-Col)</span>
+        </div>
+        <div class="dropzone" id="csv-dropzone">
+          <input type="file" id="csv-file-input" accept=".csv,.txt,.dat" style="display:none;"/>
+          <div class="dropzone-icon">📁</div>
+          <div class="dropzone-title" id="dropzone-title">Drag &amp; drop your vibration CSV here</div>
+          <div class="dropzone-sub">or <button type="button" class="btn-link" id="browse-file-btn">Browse files</button> from your computer</div>
+          <div class="dropzone-formats">Auto-detects: acceleration, vibration, DE_time, channel1, or single column floats</div>
+          <div class="file-chosen-bar" id="file-chosen-bar" style="display:none;">
+            <span class="chosen-icon">📄</span>
+            <span class="chosen-name" id="chosen-filename">sample.csv</span>
+            <span class="chosen-size" id="chosen-filesize">0 KB</span>
+            <button type="button" class="btn-remove-file" id="btn-remove-file" title="Remove file">✕</button>
+          </div>
+        </div>
+        <div class="upload-options-row">
+          <div class="opt-field">
+            <label for="upload-load-select">Motor Operating Load:</label>
+            <select id="upload-load-select" class="form-select">
+              <option value="0">0 HP (1797 RPM / No Load)</option>
+              <option value="1" selected>1 HP (1772 RPM / Standard Load)</option>
+              <option value="2">2 HP (1750 RPM / Heavy Load)</option>
+              <option value="3">3 HP (1730 RPM / Full Capacity)</option>
+            </select>
+          </div>
+          <button class="btn-primary" id="btn-run-analysis" style="margin-top:auto;">
+            ⚡ Analyze Machine Risk
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">CSV Format &amp; Detection Logic</div>
+          <span class="card-hint">Micro-Operator Friendly</span>
+        </div>
+        <div class="format-guide">
+          <div class="guide-item">
+            <span class="g-num">1</span>
+            <div class="g-text"><strong>Header Flexibility:</strong> Works with raw sensor output (ADXL345, MPU6050, PCB Piezotronics, CWRU, NASA IMS). Automatically parses time series columns.</div>
+          </div>
+          <div class="guide-item">
+            <span class="g-num">2</span>
+            <div class="g-text"><strong>Load Invariance:</strong> Evaluates your signal against the nominal baseline for your selected motor HP to eliminate false alarms from speed shifts.</div>
+          </div>
+          <div class="guide-item">
+            <span class="g-num">3</span>
+            <div class="g-text"><strong>Instant Diagnostic:</strong> Provides Risk Level (Normal, At Risk, Critical), Physics Evidence, and Hindi + English maintenance recommendations.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="upload-results-panel" style="display:none;margin-top:1.5rem">
+      <div class="result-banner" id="result-banner">
+        <div class="rb-left">
+          <div class="rb-badge" id="rb-badge">NORMAL</div>
+          <div>
+            <div class="rb-title" id="rb-title">Nominal Operating Condition (Normal)</div>
+            <div class="rb-file-info" id="rb-file-info">File: test.csv • 2,048 samples (0.171 s) • Operating Load: 1 HP</div>
+          </div>
+        </div>
+        <div class="rb-right">
+          <div class="rb-kpi">
+            <span class="rb-kpi-label">Anomaly Score</span>
+            <span class="rb-kpi-val" id="rb-score">0.124</span>
+          </div>
+          <div class="rb-kpi">
+            <span class="rb-kpi-label">Model Confidence</span>
+            <span class="rb-kpi-val" id="rb-confidence">96.4%</span>
+          </div>
+          <div class="rb-kpi">
+            <span class="rb-kpi-label">Defect Hypothesis</span>
+            <span class="rb-kpi-val hypothesis" id="rb-hypothesis">None (Healthy)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:1rem">
+        <div class="card-header-clean">
+          <div class="card-title">Plain-Language Actionable Recommendations (द्विभाषी रखरखाव सलाह)</div>
+          <span class="card-hint">Operator Guidance</span>
+        </div>
+        <div class="bilingual-advice-grid">
+          <div class="advice-card en">
+            <div class="advice-lang-badge">ENGLISH INSTRUCTION</div>
+            <div class="advice-msg"    id="rb-msg-en">—</div>
+            <div class="advice-action" id="rb-action-en">—</div>
+          </div>
+          <div class="advice-card hi">
+            <div class="advice-lang-badge">हिंदी निर्देश (HINDI)</div>
+            <div class="advice-msg"    id="rb-msg-hi">—</div>
+            <div class="advice-action" id="rb-action-hi">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row-2col" style="margin-top:1rem">
+        <div class="card">
+          <div class="card-header-clean">
+            <div class="card-title">Uploaded Signal Waveform</div>
+            <span class="card-hint">Time Domain (ADC Acceleration)</span>
+          </div>
+          <canvas id="upload-waveform-chart" height="190"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header-clean">
+            <div class="card-title">Spectral FFT Energy Spectrum</div>
+            <span class="card-hint">Frequency Domain (0 to 3,000 Hz)</span>
+          </div>
+          <canvas id="upload-spectrum-chart" height="190"></canvas>
+        </div>
+      </div>
+
+      <div class="row-2col" style="margin-top:1rem">
+        <div class="card">
+          <div class="card-header-clean">
+            <div>
+              <div class="card-title">Segment Anomaly Score Progression</div>
+              <div class="card-sub">Anomaly score trajectory across consecutive time windows in your CSV</div>
+            </div>
+            <span class="card-hint">Threshold: 0.45</span>
+          </div>
+          <canvas id="upload-timeline-chart" height="180"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-header-clean">
+            <div class="card-title">Physics Evidence (Top Deviations from Nominal Baseline)</div>
+            <span class="card-hint">Statistical Z-Score (σ)</span>
+          </div>
+          <div class="table-wrap">
+            <table class="evidence-table" id="upload-evidence-table">
+              <thead>
+                <tr>
+                  <th>Vibration Feature</th>
+                  <th>Observed Value</th>
+                  <th>Healthy Baseline</th>
+                  <th>Deviation</th>
+                </tr>
+              </thead>
+              <tbody id="upload-evidence-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 4. EARLY WARNING (NASA IMS) ═══════════════════════════════════ -->
+  <section class="page" id="page-timeline">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Early-Warning Lead Time (NASA IMS)</h1>
+        <p class="page-sub">Run-to-failure degradation tracking showing advance alert firing hours before mechanical failure</p>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-meta"><div class="kpi-label">Physical Fault Onset</div><div class="kpi-value" id="t-onset">700.0 h</div><div class="kpi-sub">Outer race spalling begins</div></div></div>
+      <div class="kpi-card"><div class="kpi-meta"><div class="kpi-label">First Anomaly Alert Fired</div><div class="kpi-value emerald-val" id="t-lead">60.0 h</div><div class="kpi-sub">Advance warning lead time</div></div></div>
+      <div class="kpi-card"><div class="kpi-meta"><div class="kpi-label">Detection Recall</div><div class="kpi-value" id="t-recall">100%</div><div class="kpi-sub">Zero missed bearing defects</div></div></div>
+      <div class="kpi-card"><div class="kpi-meta"><div class="kpi-label">Normal Phase False Alarms</div><div class="kpi-value" id="t-f1">0.0%</div><div class="kpi-sub">Clean nominal phase (0–640h)</div></div></div>
+    </div>
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-header-clean">
+        <div>
+          <div class="card-title">NASA IMS Bearing Run-to-Failure Anomaly Score Progression</div>
+          <div class="card-sub">Continuous monitoring — steady baseline followed by exponential degradation 60h prior to failure</div>
+        </div>
+        <span class="card-hint">Threshold: 0.45</span>
+      </div>
+      <canvas id="timeline-chart" height="260"></canvas>
+    </div>
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-title">Why Early-Warning Lead Time Beats F1 For Small Factories</div>
+      <div class="rob-explain">
+        <p>In manufacturing, reporting a high F1 score at the exact moment a motor catastrophically jams is useless. What factory owners need is <strong>Advance Notice</strong> so they can order a ₹1,200 bearing and swap it during scheduled shift changeover.</p>
+        <ul>
+          <li><strong>48–60 Hours Advance Notice:</strong> Alerts technicians while micro-spalls are microscopic.</li>
+          <li><strong>Zero Emergency Shutdowns:</strong> Planned weekend maintenance saves ₹1.5L to ₹4.5L in spoiled batches.</li>
+          <li><strong>RUL Extrapolation:</strong> Linear trajectory estimates exact hours remaining until critical 0.80 threshold.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 5. ROBUSTNESS ═════════════════════════════════════════════════ -->
+  <section class="page" id="page-robustness">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Robustness &amp; Operating Invariance</h1>
+        <p class="page-sub">Stress testing under factory floor electrical noise (15 dB SNR), packet drop (10%), and motor load switching</p>
+      </div>
+    </div>
+    <div class="robustness-grid" id="robustness-grid">
+      <div class="rob-card baseline"><div class="rob-title">Clean Baseline</div><div class="rob-metrics" id="rob-baseline"></div></div>
+      <div class="rob-card noisy">  <div class="rob-title">15 dB SNR Factory Noise</div><div class="rob-metrics" id="rob-noisy"></div><div class="rob-delta" id="rob-delta-noise"></div></div>
+      <div class="rob-card missing"><div class="rob-title">10% Dropped Packets</div><div class="rob-metrics" id="rob-missing"></div><div class="rob-delta" id="rob-delta-missing"></div></div>
+    </div>
+    <div class="row-2col" style="margin-top:1.5rem">
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">F1 Robustness Delta Under Harsh Conditions</div>
+          <span class="card-hint">Minimal Degradation</span>
+        </div>
+        <canvas id="rob-chart" height="210"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">Load-Aware Detection</div>
+        <div class="rob-explain">
+          <p><strong>The Core Industry Problem:</strong> Most predictive maintenance false alarms occur when the motor simply speeds up or encounters heavier torque. Standard models mistake load-induced vibration for bearing failure.</p>
+          <p><strong>MachinaSense Solution:</strong></p>
+          <ul>
+            <li><strong>Condition-Specific Modeling:</strong> Independent nominal models for 0 hp, 1 hp, 2 hp, and 3 hp conditions.</li>
+            <li><strong>Transient Settling Window:</strong> When motor load shifts &gt; 0.5 hp, a 5-step suppression window activates to allow mechanical torque to settle.</li>
+            <li><strong>Result:</strong> 0% false alarms caused by load changes across all CWRU evaluation splits.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 6. EDGE DEPLOYMENT & COMMERCIAL ROI ═══════════════════════════ -->
+  <section class="page" id="page-edge">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Edge Deployment &amp; Small Operator ROI</h1>
+        <p class="page-sub">Low-latency inference on ₹1,200 microcontroller hardware and compelling commercial economics</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header-clean">
+        <div>
+          <div class="card-title">Live Edge Micro-Benchmark</div>
+          <div class="card-sub">Measured on current host CPU with profiling projections for edge targets</div>
+        </div>
+        <button class="btn-primary" id="btn-run-edge-bench">⚡ Run Live Edge Benchmark</button>
+      </div>
+      <div class="kpi-grid" style="margin-top:1rem">
+        <div class="kpi-card"><div class="kpi-label">Single-Sample Anomaly Score</div>        <div class="kpi-value cyan-val"    id="bench-score-lat">—</div><div class="kpi-sub">Target: &lt; 5 ms</div></div>
+        <div class="kpi-card"><div class="kpi-label">Feature Extraction (24 feats)</div>      <div class="kpi-value cyan-val"    id="bench-feat-lat">—</div> <div class="kpi-sub">FFT, RMS, Kurtosis, Envelope</div></div>
+        <div class="kpi-card"><div class="kpi-label">End-to-End Latency</div>                 <div class="kpi-value emerald-val" id="bench-total-lat">—</div><div class="kpi-sub">Passes ESP32 &amp; RPi limits</div></div>
+        <div class="kpi-card"><div class="kpi-label">Peak Inference RAM</div>                 <div class="kpi-value"             id="bench-ram">142 KB</div> <div class="kpi-sub">Fits within 512 KB SRAM</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-title">Target Edge Hardware Specifications &amp; BOM Cost Comparison</div>
+      <div class="table-wrap">
+        <table class="styled-table">
+          <thead><tr><th>Deployment Tier</th><th>Processor / Spec</th><th>RAM Footprint</th><th>Inference Latency</th><th>Hardware BOM Cost</th><th>Suitability</th></tr></thead>
+          <tbody>
+            <tr class="highlight-row">
+              <td><strong>MachinaSense ESP32-S3 Node</strong></td>
+              <td>Xtensa Dual-Core 32-bit @ 240 MHz</td>
+              <td>84 KB SRAM</td><td>5.8 ms / segment</td>
+              <td><span class="price-tag">₹1,150 ($13.80)</span></td>
+              <td><span class="badge-tag green">Recommended (Per Motor)</span></td>
+            </tr>
+            <tr>
+              <td><strong>MachinaSense Raspberry Pi Zero 2 W</strong></td>
+              <td>Quad-Core 64-bit @ 1.0 GHz</td>
+              <td>12.8 MB RAM</td><td>1.9 ms / segment</td>
+              <td><span class="price-tag">₹2,200 ($26.40)</span></td>
+              <td><span class="badge-tag blue">Edge Gateway + Web UI</span></td>
+            </tr>
+            <tr class="legacy-row">
+              <td>Siemens SIPLUS CMS 1200</td>
+              <td>Industrial PLC Rack Module</td>
+              <td>512 MB</td><td>~500 ms</td>
+              <td><span class="price-tag bad">₹4,50,000+</span></td>
+              <td><span class="badge-tag red">Large Plants Only</span></td>
+            </tr>
+            <tr class="legacy-row">
+              <td>Augury Machine Health</td>
+              <td>Proprietary Sensor + Cloud SaaS</td>
+              <td>Cloud-dependent</td><td>Minutes (Cloud Roundtrip)</td>
+              <td><span class="price-tag bad">₹2,50,000 / yr</span></td>
+              <td><span class="badge-tag red">Expensive Subscription</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card" style="margin-top:1.5rem">
+      <div class="card-title">Small Operator (MSME) Commercial ROI &amp; Payback Calculator</div>
+      <div class="card-sub">Calculate exact payback duration for a small machine shop or factory</div>
+      <div class="calculator-grid">
+        <div class="calc-inputs">
+          <div class="slider-group">
+            <div class="slider-header"><label>Number of Factory Motors</label><span class="slider-val" id="val-machines">10 motors</span></div>
+            <input type="range" id="input-machines" min="1" max="50" value="10" class="slider"/>
+          </div>
+          <div class="slider-group">
+            <div class="slider-header"><label>Unplanned Downtime Cost (per hour)</label><span class="slider-val" id="val-downtime">₹25,000 / hr</span></div>
+            <input type="range" id="input-downtime" min="5000" max="100000" step="5000" value="25000" class="slider"/>
+          </div>
+          <div class="slider-group">
+            <div class="slider-header"><label>Estimated Annual Unplanned Outages</label><span class="slider-val" id="val-hours">18 hours / yr</span></div>
+            <input type="range" id="input-hours" min="4" max="50" value="18" class="slider"/>
+          </div>
+        </div>
+        <div class="calc-results">
+          <div class="result-box"><div class="res-label">Total Upfront Hardware Investment</div><div class="res-value" id="res-inv">₹18,000</div><div class="res-sub">10 MachinaSense ESP32-S3 sensor nodes</div></div>
+          <div class="result-box"><div class="res-label">Annual Losses Avoided</div><div class="res-value emerald-val" id="res-saved">₹3,69,000</div><div class="res-sub">82% catastrophic failures prevented</div></div>
+          <div class="result-box highlight"><div class="res-label">Investment Payback Period</div><div class="res-value cyan-val" id="res-payback">17.8 Days</div><div class="res-sub">Full capital recovery in under 3 weeks!</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 7. ALERT LOG & EXPLAINABILITY ═════════════════════════════════ -->
+  <section class="page" id="page-alerts">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Explainable Alert Log &amp; Maintenance Guidance</h1>
+        <p class="page-sub">Dual-language (English + Hindi) alerts mapping vibration signatures to actionable technician guidance</p>
+      </div>
+    </div>
+    <div class="alert-filters">
+      <button class="filter-btn active" data-sev="all">All Alerts</button>
+      <button class="filter-btn" data-sev="critical">Critical</button>
+      <button class="filter-btn" data-sev="high">High</button>
+      <button class="filter-btn" data-sev="medium">Medium</button>
+      <button class="filter-btn" data-sev="low">Low</button>
+    </div>
+    <div class="alerts-list" id="alerts-list">
+      <div class="loading-msg">Loading alerts...</div>
+    </div>
+  </section>
+
+  <!-- ══ 8. PERFORMANCE ════════════════════════════════════════════════ -->
+  <section class="page" id="page-metrics">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Held-Out Model Evaluation &amp; Metrics</h1>
+        <p class="page-sub">Strict train/test separation (normal-only training) evaluated across 4 load levels and 4 fault classes</p>
+      </div>
+    </div>
+    <div class="metrics-summary" id="metrics-summary">
+      <div class="met-row">
+        <div class="met-cell label">Metric</div>
+        <div class="met-cell label">Overall Held-Out</div>
+        <div class="met-cell label">Load 0 HP</div>
+        <div class="met-cell label">Load 1 HP</div>
+        <div class="met-cell label">Load 2 HP</div>
+        <div class="met-cell label">Load 3 HP</div>
+      </div>
+      <div class="met-row" id="met-precision"></div>
+      <div class="met-row" id="met-recall"></div>
+      <div class="met-row" id="met-f1"></div>
+      <div class="met-row" id="met-auc"></div>
+      <div class="met-row" id="met-accuracy"></div>
+    </div>
+    <div class="row-2col">
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">Confusion Matrix</div>
+          <span class="card-hint">Held-Out Test Set</span>
+        </div>
+        <div class="cm-wrap" id="confusion-matrix"></div>
+      </div>
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">Per-Load F1 Comparison</div>
+          <span class="card-hint">0 to 3 HP</span>
+        </div>
+        <canvas id="load-f1-chart" height="200"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 9. TEMPERATURE & LOAD MONITOR ═══════════════════════════════════ -->
+  <section class="page" id="page-tempload">
+    <div class="page-header">
+      <div class="header-left">
+        <h1>Temperature &amp; Load Monitor</h1>
+        <p class="page-sub">Real-time motor temperature tracking &amp; load-aware anomaly detection trained on the University of Ottawa Electric Motor Dataset</p>
+      </div>
+      <div class="header-pills">
+        <span class="pill-coldstart">✔ Ottawa Dataset AI Model</span>
+        <span class="pill-dataset" id="tl-dataset-pill">Loading Ottawa data…</span>
+      </div>
+    </div>
+
+    <!-- Condition Selector & Controls -->
+    <div class="sim-controls card" style="margin-bottom:1.5rem">
+      <div class="ctrl-row">
+        <div class="ctrl-group">
+          <label>Motor Condition (Fault Simulation)</label>
+          <div class="btn-group" id="tl-cond-btns">
+            <button class="tl-cond-btn active" data-cond="healthy">✔ Healthy</button>
+            <button class="tl-cond-btn" data-cond="broken_bearing">⚠ Broken Bearing</button>
+            <button class="tl-cond-btn" data-cond="faulty_bearing">⚠ Faulty Bearing</button>
+            <button class="tl-cond-btn" data-cond="stator_winding">⚠ Stator Winding</button>
+            <button class="tl-cond-btn" data-cond="rotor_unbalance">⚠ Rotor Unbalance</button>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <label>Load Condition</label>
+          <div class="btn-group" id="tl-load-btns">
+            <button class="tl-load-btn active" data-load="0">⊙ Unloaded (3000 RPM)</button>
+            <button class="tl-load-btn" data-load="1">⊕ Loaded (1500 RPM)</button>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <label>Sampling Speed</label>
+          <select id="tl-speed">
+            <option value="2000">Slow (2s)</option>
+            <option value="1000" selected>Standard (1s)</option>
+            <option value="500">Fast (0.5s)</option>
+          </select>
+        </div>
+      </div>
+      <div class="ctrl-actions">
+        <button class="btn-primary"   id="tl-start">▶ Start Monitoring</button>
+        <button class="btn-secondary" id="tl-stop"  disabled>⏹ Pause</button>
+        <button class="btn-ghost"     id="tl-reset">↺ Reset</button>
+      </div>
+    </div>
+
+    <!-- Top KPI Row -->
+    <div class="kpi-grid" style="margin-bottom:1.5rem">
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" id="tl-temp-icon-wrap" style="background:rgba(16,185,129,0.12)">🌡</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">Motor Temperature</div>
+          <div class="kpi-value" id="tl-temp-val" style="color:#10b981">—°C</div>
+          <div class="kpi-sub"  id="tl-temp-status">Awaiting data…</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" id="tl-load-icon-wrap" style="background:rgba(6,182,212,0.12)">⚙</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">Load Condition</div>
+          <div class="kpi-value" id="tl-load-val" style="color:#06b6d4">—</div>
+          <div class="kpi-sub"  id="tl-load-rpm">—</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" id="tl-risk-icon-wrap" style="background:rgba(99,102,241,0.12)">◈</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">Anomaly Score</div>
+          <div class="kpi-value" id="tl-score-val" style="color:#818cf8">—</div>
+          <div class="kpi-sub"  id="tl-sev-label">Ottawa AI Model</div>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon-wrap" style="background:rgba(245,158,11,0.12)">⏱</div>
+        <div class="kpi-meta">
+          <div class="kpi-label">Monitoring Step</div>
+          <div class="kpi-value amber-val" id="tl-step-val">0</div>
+          <div class="kpi-sub">Continuous real-time read</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Temperature Thermometer + Trend -->
+    <div class="row-2col">
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Temperature Gauge</div>
+            <div class="card-sub">Live motor temperature with threshold bands</div>
+          </div>
+          <span class="card-hint" id="tl-temp-badge-label">NORMAL</span>
+        </div>
+        <div class="thermometer-wrap">
+          <svg id="tl-thermo-svg" viewBox="0 0 120 260" class="thermo-svg">
+            <!-- Thermometer tube -->
+            <rect x="50" y="20" width="20" height="200" rx="10" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
+            <!-- Threshold bands background -->
+            <rect x="50" y="120" width="20" height="50"  rx="0" fill="rgba(245,158,11,0.18)"/>
+            <rect x="50" y="90"  width="20" height="30"  rx="0" fill="rgba(249,115,22,0.20)"/>
+            <rect x="50" y="20"  width="20" height="70"  rx="0" fill="rgba(239,68,68,0.18)"/>
+            <!-- Fill bar -->
+            <rect id="tl-thermo-fill" x="51" y="170" width="18" height="50" rx="8" fill="#10b981"/>
+            <!-- Bulb -->
+            <circle cx="60" cy="230" r="18" fill="#10b981" id="tl-thermo-bulb"/>
+            <circle cx="60" cy="230" r="14" fill="#1e293b"/>
+            <circle id="tl-bulb-inner" cx="60" cy="230" r="11" fill="#10b981"/>
+            <!-- Tick labels -->
+            <text x="76" y="225" font-size="9" fill="#94a3b8">15°</text>
+            <text x="76" y="175" font-size="9" fill="#10b981">35°</text>
+            <text x="76" y="120" font-size="9" fill="#f59e0b">50°</text>
+            <text x="76" y="90"  font-size="9" fill="#f97316">65°</text>
+            <text x="76" y="50"  font-size="9" fill="#ef4444">80°</text>
+            <!-- Temperature readout -->
+            <text id="tl-thermo-text" x="60" y="258" text-anchor="middle" font-size="12" font-weight="700" fill="#10b981">—°C</text>
+          </svg>
+          <div class="thermo-legend">
+            <div class="thermo-band green">▬ Normal (&lt;35°C)</div>
+            <div class="thermo-band amber">▬ Elevated (35–50°C)</div>
+            <div class="thermo-band orange">▬ High (50–65°C)</div>
+            <div class="thermo-band red">▬ Critical (&gt;65°C)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Temperature Trend (Live)</div>
+            <div class="card-sub">60-step rolling history from Ottawa-trained model</div>
+          </div>
+          <span class="card-hint">°C over time</span>
+        </div>
+        <canvas id="tl-temp-chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Anomaly Score Trend + Oscilloscope -->
+    <div class="row-2col" style="margin-top:1.5rem">
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Anomaly Score (Ottawa AI Model)</div>
+            <div class="card-sub">Real-time fault score from trained Isolation Forest + temperature blend</div>
+          </div>
+          <span class="card-hint">Threshold: 0.45</span>
+        </div>
+        <canvas id="tl-score-chart" height="200"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-header-clean">
+          <div>
+            <div class="card-title">Live Vibration (Ottawa Accelerometer)</div>
+            <div class="card-sub">Fixed-scale oscilloscope — Acc1 channel (m/s²)</div>
+          </div>
+          <span class="card-hint live-indicator" id="tl-osc-label">● IDLE</span>
+        </div>
+        <canvas id="tl-waveform-chart" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Alert Area -->
+    <div class="row-2col" style="margin-top:1.5rem">
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">Real-Time Alert &amp; Condition Status</div>
+          <span class="card-hint">Ottawa Model Output</span>
+        </div>
+        <div class="alert-box" id="tl-alert-box">
+          <div class="no-alert">
+            <span class="no-alert-icon">✔</span>
+            <div>Monitoring not started. Press ▶ Start Monitoring to begin.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header-clean">
+          <div class="card-title">Condition Temperature Baselines</div>
+          <span class="card-sub">From Ottawa dataset — per-fault-class mean temperatures</span>
+          <span class="card-hint">Ottawa Data</span>
+        </div>
+        <div id="tl-baselines-grid" class="baselines-grid">
+          <div class="loading-msg">Loading baselines…</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ─── Voice Assistant Bubble ────────────────────────────────────────── -->
+<div id="voice-assistant" aria-live="polite"
+     style="position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;pointer-events:none;">
+  <div id="va-bubble"
+       style="display:none;background:#111827;border:1.5px solid #1f293d;border-radius:1rem;
+              padding:.7rem 1.1rem;font-size:.82rem;color:#f3f4f6;max-width:280px;
+              box-shadow:0 4px 20px rgba(0,0,0,.5);">
+    <span id="va-icon" style="margin-right:.4rem">🔔</span>
+    <span id="va-text"></span>
+  </div>
+</div>
+
+<!-- ─── Loading Overlay ──────────────────────────────────────────────── -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loader-box">
+    <div class="spinner"></div>
+    <div class="loader-title">MachinaSense AI</div>
+    <div class="loader-msg"  id="loader-msg">Loading CWRU Bearing Data...</div>
+    <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
+    <div class="loader-sub">Unsupervised Nominal Baseline Training in Progress</div>
+  </div>
+</div>
+
+<script src="/static/js/charts.js"></script>
+<script src="/static/js/app.js"></script>
+
+<!-- ─── AI Chatbot Widget ──────────────────────────────────────────────── -->
+<!-- Floating Action Button -->
+<button id="chatbot-fab" title="Ask MachinaSense AI" aria-label="Open AI Assistant">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+  </svg>
+  <span class="chat-notif-dot"></span>
+</button>
+
+<!-- Chat Panel -->
+<div id="chatbot-panel" class="chat-hidden" role="dialog" aria-label="MachinaSense AI Chat">
+  <!-- Header -->
+  <div class="chat-header">
+    <div class="chat-header-icon">🤖</div>
+    <div class="chat-header-text">
+      <div class="chat-header-title">MachinaSense AI</div>
+      <div class="chat-header-sub">Industrial Intelligence Assistant</div>
+    </div>
+    <div class="chat-header-status" title="Online"></div>
+    <button id="chat-close-btn" aria-label="Close chat">✕</button>
+  </div>
+
+  <!-- Message Area -->
+  <div id="chat-messages" role="log" aria-live="polite"></div>
+
+  <!-- Quick-action chips -->
+  <div class="chat-quick-btns" id="chat-quick-btns">
+    <button class="chat-quick-btn" data-q="What faults can MachinaSense detect?">⚙️ Fault types</button>
+    <button class="chat-quick-btn" data-q="What are the performance metrics?">📊 Performance</button>
+    <button class="chat-quick-btn" data-q="What is the hardware cost?">💰 Hardware cost</button>
+    <button class="chat-quick-btn" data-q="What is the ROI and payback period?">📈 ROI</button>
+    <button class="chat-quick-btn" data-q="How do I use the live simulator?">🚀 How to use</button>
+    <button class="chat-quick-btn" data-q="What is the current live system status?">📡 Live status</button>
+  </div>
+
+  <!-- Input Row -->
+  <div class="chat-input-row">
+    <textarea id="chat-input" placeholder="Ask about faults, hardware, ROI, alerts…" rows="1" autocomplete="off"></textarea>
+    <button id="chat-send-btn" aria-label="Send message">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+</body>
+</html>
